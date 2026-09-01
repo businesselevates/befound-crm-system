@@ -11,5 +11,6 @@ feed it.
 ## Current
 
 - [`docs/appointment-date-gap.md`](docs/appointment-date-gap.md) — why 293
-  `Booked Discovery` rows synced from GoHighLevel have no `Appointment Date`,
-  and what it takes to backfill them.
+  `Booked Discovery` rows synced from GoHighLevel had no `Appointment Date`,
+  how 287 of them were recovered from Acuity, and the ten rows still needing a
+  human.

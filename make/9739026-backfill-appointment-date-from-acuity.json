@@ -1,0 +1,68 @@
+{
+  "name": "[BeFound] Backfill Appointment Date from Acuity (Claude)",
+  "flow": [
+    {
+      "id": 1,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": { "__IMTCONN__": 14026193 },
+      "mapper": {
+        "base": "appqJeEPUeOPaQC3y",
+        "table": "tbl9RnE9oy5G29AN7",
+        "fields": ["Record ID", "Primary Email", "GHL Status"],
+        "formula": "AND({GHL Status} != \"\", {Appointment Date} = BLANK())",
+        "maxRecords": "300",
+        "useColumnId": false
+      },
+      "metadata": { "designer": { "x": 0, "y": 0 } }
+    },
+    {
+      "id": 2,
+      "module": "acuity-scheduling:listAppointments",
+      "version": 1,
+      "parameters": { "__IMTCONN__": 14351824 },
+      "mapper": {
+        "email": "{{1.`Primary Email`}}",
+        "minDate": "2023-01-01",
+        "canceled": "showall",
+        "direction": "ASC",
+        "includeTime": false,
+        "limitResult": 1
+      },
+      "metadata": { "designer": { "x": 300, "y": 0 } }
+    },
+    {
+      "id": 3,
+      "module": "airtable:ActionUpdateRecords",
+      "version": 3,
+      "parameters": { "__IMTCONN__": 14026193 },
+      "filter": {
+        "name": "Acuity appointment found",
+        "conditions": [[{ "a": "{{2.id}}", "o": "exist" }]]
+      },
+      "mapper": {
+        "id": "{{1.id}}",
+        "base": "appqJeEPUeOPaQC3y",
+        "table": "tbl9RnE9oy5G29AN7",
+        "record": {
+          "fldc8iSqiEGVmP8qB": "{{formatDate(2.datetime; \"YYYY-MM-DD\"; \"Asia/Singapore\")}}"
+        },
+        "useColumnId": true
+      },
+      "metadata": { "designer": { "x": 600, "y": 0 } }
+    }
+  ],
+  "metadata": {
+    "version": 1,
+    "scenario": {
+      "maxErrors": 3,
+      "autoCommit": true,
+      "roundtrips": 1,
+      "sequential": false,
+      "dataloss": false,
+      "dlq": false,
+      "freshVariables": false
+    },
+    "designer": { "orphans": [] }
+  }
+}
