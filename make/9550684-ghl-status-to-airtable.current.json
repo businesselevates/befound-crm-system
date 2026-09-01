@@ -1,0 +1,133 @@
+{
+  "name": "[BeFound] GHL Status → Airtable (Tracy)",
+  "flow": [
+    {
+      "id": 1,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "parameters": { "hook": 4269673, "maxResults": 1 },
+      "mapper": {},
+      "metadata": { "designer": { "x": 0, "y": 0 } }
+    },
+    {
+      "id": 2,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": { "__IMTCONN__": 14026193 },
+      "mapper": {
+        "base": "appqJeEPUeOPaQC3y",
+        "table": "tbl9RnE9oy5G29AN7",
+        "fields": ["Record ID", "Lead Status", "GHL Status"],
+        "formula": "LOWER(ARRAYJOIN({Primary Email}))=LOWER(\"{{ifempty(1.email; 1.customData.email)}}\")",
+        "maxRecords": "5",
+        "useColumnId": false
+      },
+      "metadata": { "designer": { "x": 300, "y": 0 } }
+    },
+    {
+      "id": 3,
+      "module": "builtin:BasicAggregator",
+      "version": 1,
+      "parameters": { "feeder": 2 },
+      "mapper": { "id": "{{2.id}}" },
+      "metadata": { "designer": { "x": 600, "y": 0 } }
+    },
+    {
+      "id": 4,
+      "module": "builtin:BasicRouter",
+      "version": 1,
+      "parameters": {},
+      "mapper": null,
+      "metadata": { "designer": { "x": 900, "y": 0 } },
+      "routes": [
+        {
+          "flow": [
+            {
+              "id": 5,
+              "module": "airtable:ActionUpdateRecords",
+              "version": 3,
+              "parameters": { "__IMTCONN__": 14026193 },
+              "filter": {
+                "name": "Record exists → update",
+                "conditions": [[{ "a": "{{get(first(3.array); \"id\")}}", "o": "exist" }]]
+              },
+              "mapper": {
+                "id": "{{get(first(3.array); \"id\")}}",
+                "base": "appqJeEPUeOPaQC3y",
+                "table": "tbl9RnE9oy5G29AN7",
+                "record": {
+                  "fldDaPxwr7ZJxbox3": "{{if(1.changed_at; 1.changed_at; now)}}",
+                  "fldsvvnobT5os0cPn": "{{ifempty(1.status; 1.customData.status)}}"
+                },
+                "useColumnId": true
+              },
+              "metadata": { "designer": { "x": 1200, "y": -150 } }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 6,
+              "module": "airtable:ActionSearchRecords",
+              "version": 3,
+              "parameters": { "__IMTCONN__": 14026193 },
+              "filter": {
+                "name": "No record → find lead",
+                "conditions": [[{ "a": "{{get(first(3.array); \"id\")}}", "o": "notexist" }]]
+              },
+              "mapper": {
+                "base": "appqJeEPUeOPaQC3y",
+                "table": "tblxtd3MixN4jutyA",
+                "fields": ["Name", "Email", "Record ID"],
+                "formula": "LOWER({Email})=LOWER(\"{{ifempty(1.email; 1.customData.email)}}\")",
+                "maxRecords": "1",
+                "useColumnId": false
+              },
+              "metadata": { "designer": { "x": 1200, "y": 150 } }
+            },
+            {
+              "id": 7,
+              "module": "airtable:ActionCreateRecord",
+              "version": 3,
+              "parameters": { "__IMTCONN__": 14026193 },
+              "filter": {
+                "name": "Lead found → create Booked Discovery",
+                "conditions": [[{ "a": "{{6.id}}", "o": "exist" }]]
+              },
+              "mapper": {
+                "base": "appqJeEPUeOPaQC3y",
+                "table": "tbl9RnE9oy5G29AN7",
+                "record": {
+                  "fldDaPxwr7ZJxbox3": "{{if(1.changed_at; 1.changed_at; now)}}",
+                  "fldeZdZTOmI1t32s2": ["{{6.id}}"],
+                  "fldsvvnobT5os0cPn": "{{ifempty(1.status; 1.customData.status)}}"
+                },
+                "useColumnId": true
+              },
+              "metadata": { "designer": { "x": 1500, "y": 150 } }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "designer": { "orphans": [] },
+    "scenario": {
+      "dlq": false,
+      "dataloss": false,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "roundtrips": 1,
+      "sequential": false,
+      "confidential": false,
+      "freshVariables": false,
+      "autoCommitTriggerLast": true
+    }
+  },
+  "scheduling": { "type": "immediately" },
+  "interface": { "input": [], "output": [] }
+}
