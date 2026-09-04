@@ -127,12 +127,39 @@ If you would rather have the date land on the row the moment it is created,
 the safe shape is a third router branch (create the row, then look up Acuity
 and update it) rather than a lookup inline in the existing branch.
 
-## Loose end
+## GHL Status normalisation
 
-`GHL Status` is free text and GHL sends two spellings of the same stage:
-"Didn't Buy" (66) and "Didn't buy" (12). Any report grouping on this column
-splits that stage in two. Normalising it in the scenario, or converting the
-column to a single select, closes it.
+`GHL Status` is a free-text field and GHL was sending two spellings of the same
+stage — "Didn't Buy" (481) and "Didn't buy" (12) — which split that stage in two
+in any grouped report. The other three values were already consistent.
+
+Canonical set, Title Case: **Cancelled**, **Didn't Buy**, **No Show**,
+**Rescheduled**. All apostrophes are straight (U+0027).
+
+Fixed on both sides:
+
+- The 12 rows spelled "Didn't buy" were updated in place. The column now holds
+  exactly four distinct values — Cancelled 520, Didn't Buy 493, No Show 455,
+  Rescheduled 38 — across the same 1,506 rows as before.
+- Scenario `9550684` now normalises on write. Both its status mappings (the
+  update branch and the create branch) pass the incoming value through:
+
+  ```
+  {{switch(lower(trim(ifempty(1.status; 1.customData.status)));
+     "cancelled"; "Cancelled"; "canceled"; "Cancelled";
+     "didn't buy"; "Didn't Buy"; "didn’t buy"; "Didn't Buy"; "didnt buy"; "Didn't Buy";
+     "no show"; "No Show"; "no-show"; "No Show"; "noshow"; "No Show";
+     "rescheduled"; "Rescheduled";
+     trim(ifempty(1.status; 1.customData.status)))}}
+  ```
+
+  It folds case, trims whitespace, and absorbs the obvious variants (US
+  "canceled", a curly apostrophe, a missing apostrophe, "no-show"). The last
+  argument is the fallback: anything GHL sends that is not in the list is
+  written through as-is rather than blanked, so a stage added later still lands
+  in the column — just unnormalised, where it is visible and easy to fold in.
+
+Nothing else in the scenario changed.
 
 ## Files
 
@@ -142,4 +169,4 @@ column to a single select, closes it.
 - `make/9739026-backfill-appointment-date-from-acuity.json` — the reconcile
   scenario.
 - `make/9550684-ghl-status-to-airtable.current.json` — the GHL sync as it
-  stands, unchanged.
+  stands, with the status normalisation applied.

@@ -8,7 +8,8 @@ Snapshots of the Make scenarios that write into the `Masterlist` Airtable base
 | `9550684-ghl-status-to-airtable.current.json` | [BeFound] GHL Status → Airtable (Tracy) | 9550684 | webhook |
 | `9739026-backfill-appointment-date-from-acuity.json` | [BeFound] Appointment Date reconcile from Acuity (daily) | 9739026 | daily 02:00 SGT |
 
-`9550684-...current.json` is an as-is export and the scenario has not been
-changed — see `docs/appointment-date-gap.md` for why.
+`9550684-...current.json` reflects the live scenario. Its only edit is the
+`GHL Status` normalisation; the Appointment Date mapping was deliberately left
+out — see `docs/appointment-date-gap.md` for why.
 
 Re-export after editing anything in Make so these snapshots stay truthful.
